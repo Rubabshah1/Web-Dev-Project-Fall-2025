@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { BudgetOverview } from "@/components/BudgetOverview";
-import { BudgetSettings } from "@/components/BudgetSettings";
 import { AddExpenseForm } from "@/components/AddExpenseForm";
 import { ExpenseList } from "@/components/ExpenseList";
 import { CategoryChart } from "@/components/CategoryChart";
@@ -36,8 +35,8 @@ const Index = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [monthlyBudget, setMonthlyBudget] = useState(50000);
-  const [categoryBudgets, setCategoryBudgets] = useState<Record<string, number>>({});
+  
+  const monthlyBudget = 50000; // Default monthly budget
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -49,7 +48,6 @@ const Index = () => {
     if (user) {
       fetchCategories();
       fetchExpenses();
-      fetchBudget();
     }
   }, [user]);
 
@@ -63,30 +61,6 @@ const Index = () => {
       console.error('Error fetching categories:', error);
     } else {
       setCategories(data || []);
-    }
-  };
-
-  const fetchBudget = async () => {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
-
-    const { data: budget } = await supabase
-      .from('budgets')
-      .select('*, category_budgets(*)')
-      .eq('user_id', user?.id)
-      .eq('period_start', startOfMonth)
-      .eq('period_end', endOfMonth)
-      .single();
-
-    if (budget) {
-      setMonthlyBudget(Number(budget.total_budget));
-      
-      const limits: Record<string, number> = {};
-      budget.category_budgets?.forEach((cb: any) => {
-        limits[cb.category_id] = Number(cb.limit_amount);
-      });
-      setCategoryBudgets(limits);
     }
   };
 
@@ -253,24 +227,14 @@ const Index = () => {
                 <p className="text-sm text-muted-foreground">Manage your monthly expenses</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <BudgetSettings 
-                userId={user.id} 
-                categories={categories} 
-                onBudgetUpdate={() => {
-                  fetchBudget();
-                  fetchExpenses();
-                }} 
-              />
-              <Button
-                variant="outline"
-                onClick={handleSignOut}
-                className="gap-2"
-              >
-                <LogOut className="h-4 w-4" />
-                Sign Out
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              onClick={handleSignOut}
+              className="gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </Button>
           </div>
         </div>
       </header>
@@ -294,7 +258,7 @@ const Index = () => {
         {/* Expense List and Chart */}
         <section className="grid gap-8 lg:grid-cols-2">
           <ExpenseList expenses={expensesWithCategory} onDeleteExpense={handleDeleteExpense} />
-          <CategoryChart expenses={expensesWithCategory} categoryBudgets={categoryBudgets} />
+          <CategoryChart expenses={expensesWithCategory} />
         </section>
       </main>
 
