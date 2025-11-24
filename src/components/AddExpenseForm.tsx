@@ -5,58 +5,46 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-
-export type Category = "grocery" | "shopping" | "utilities" | "car" | "other";
-
-export interface Expense {
-  id: string;
-  amount: number;
-  category: Category;
-  description: string;
-  date: string;
-}
+import type { Category } from "@/pages/Index";
 
 interface AddExpenseFormProps {
-  onAddExpense: (expense: Expense) => void;
+  onAddExpense: (category: string, amount: number, note: string) => void;
+  categories: Category[];
 }
 
-export const AddExpenseForm = ({ onAddExpense }: AddExpenseFormProps) => {
+const defaultCategories = [
+  { name: 'grocery', icon: '🛒', label: 'Grocery' },
+  { name: 'shopping', icon: '🛍️', label: 'Shopping' },
+  { name: 'utilities', icon: '⚡', label: 'Utilities' },
+  { name: 'car', icon: '🚗', label: 'Car' },
+  { name: 'other', icon: '📋', label: 'Other' },
+];
+
+export const AddExpenseForm = ({ onAddExpense, categories }: AddExpenseFormProps) => {
   const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState<Category>("grocery");
+  const [category, setCategory] = useState("grocery");
   const [description, setDescription] = useState("");
-  const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!amount || parseFloat(amount) <= 0) {
-      toast({
-        title: "Invalid Amount",
-        description: "Please enter a valid amount greater than 0",
-        variant: "destructive",
-      });
       return;
     }
 
-    const newExpense: Expense = {
-      id: Date.now().toString(),
-      amount: parseFloat(amount),
-      category,
-      description,
-      date: new Date().toISOString(),
-    };
-
-    onAddExpense(newExpense);
-    
-    toast({
-      title: "Expense Added",
-      description: `₹${parseFloat(amount).toLocaleString()} added to ${category}`,
-    });
+    onAddExpense(category, parseFloat(amount), description);
 
     setAmount("");
     setDescription("");
   };
+
+  // Merge default categories with user's custom categories
+  const allCategories = [
+    ...defaultCategories,
+    ...categories
+      .filter(c => !defaultCategories.some(dc => dc.name.toLowerCase() === c.name.toLowerCase()))
+      .map(c => ({ name: c.name, icon: c.icon || '📋', label: c.name.charAt(0).toUpperCase() + c.name.slice(1) }))
+  ];
 
   return (
     <Card className="p-6 bg-gradient-to-br from-card to-secondary/20 shadow-[var(--shadow-card)] border-border/50">
@@ -79,16 +67,16 @@ export const AddExpenseForm = ({ onAddExpense }: AddExpenseFormProps) => {
 
           <div className="space-y-2">
             <Label htmlFor="category" className="text-foreground">Category</Label>
-            <Select value={category} onValueChange={(value) => setCategory(value as Category)}>
+            <Select value={category} onValueChange={setCategory}>
               <SelectTrigger id="category" className="border-border bg-background">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="grocery">🛒 Grocery</SelectItem>
-                <SelectItem value="shopping">🛍️ Shopping</SelectItem>
-                <SelectItem value="utilities">⚡ Utilities</SelectItem>
-                <SelectItem value="car">🚗 Car</SelectItem>
-                <SelectItem value="other">📋 Other</SelectItem>
+                {allCategories.map(cat => (
+                  <SelectItem key={cat.name} value={cat.name}>
+                    {cat.icon} {cat.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
