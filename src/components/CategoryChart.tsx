@@ -4,12 +4,14 @@ import { useMemo } from "react";
 interface ExpenseWithCategory {
   id: string;
   amount: number;
+  category_id: string;
   categoryName: string;
   categoryIcon: string;
 }
 
 interface CategoryChartProps {
   expenses: ExpenseWithCategory[];
+  categoryBudgets?: Record<string, number>;
 }
 
 const getCategoryColor = (categoryName: string): string => {
@@ -23,12 +25,16 @@ const getCategoryColor = (categoryName: string): string => {
   return colors[categoryName.toLowerCase()] || "hsl(var(--chart-5))";
 };
 
-export const CategoryChart = ({ expenses }: CategoryChartProps) => {
+export const CategoryChart = ({ expenses, categoryBudgets = {} }: CategoryChartProps) => {
   const categoryTotals = useMemo(() => {
-    const totals: Record<string, { amount: number; icon: string }> = {};
+    const totals: Record<string, { amount: number; icon: string; categoryId: string }> = {};
     expenses.forEach((expense) => {
       if (!totals[expense.categoryName]) {
-        totals[expense.categoryName] = { amount: 0, icon: expense.categoryIcon };
+        totals[expense.categoryName] = { 
+          amount: 0, 
+          icon: expense.categoryIcon,
+          categoryId: expense.category_id
+        };
       }
       totals[expense.categoryName].amount += expense.amount;
     });
@@ -51,6 +57,10 @@ export const CategoryChart = ({ expenses }: CategoryChartProps) => {
         <div className="space-y-4">
           {sortedCategories.map(([categoryName, data]) => {
             const percentage = ((data.amount / totalSpent) * 100).toFixed(1);
+            const categoryBudget = categoryBudgets[data.categoryId];
+            const isOverBudget = categoryBudget && data.amount > categoryBudget;
+            const budgetPercentage = categoryBudget ? ((data.amount / categoryBudget) * 100).toFixed(1) : null;
+            
             return (
               <div key={categoryName} className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
@@ -58,7 +68,14 @@ export const CategoryChart = ({ expenses }: CategoryChartProps) => {
                     <span className="text-lg">{data.icon}</span>
                     {categoryName.charAt(0).toUpperCase() + categoryName.slice(1)}
                   </span>
-                  <span className="text-muted-foreground">{percentage}%</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">{percentage}% of total</span>
+                    {categoryBudget && (
+                      <span className={`text-xs font-semibold ${isOverBudget ? 'text-warning' : 'text-success'}`}>
+                        {budgetPercentage}% of limit
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="flex-1 h-8 bg-muted rounded-full overflow-hidden">
@@ -82,6 +99,18 @@ export const CategoryChart = ({ expenses }: CategoryChartProps) => {
                     </span>
                   )}
                 </div>
+                {categoryBudget && (
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">
+                      Budget: ₹{categoryBudget.toLocaleString()}
+                    </span>
+                    <span className={isOverBudget ? 'text-warning font-semibold' : 'text-success'}>
+                      {isOverBudget 
+                        ? `₹${(data.amount - categoryBudget).toLocaleString()} over` 
+                        : `₹${(categoryBudget - data.amount).toLocaleString()} remaining`}
+                    </span>
+                  </div>
+                )}
               </div>
             );
           })}
