@@ -35,8 +35,8 @@ const Index = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  const monthlyBudget = 50000; // Default monthly budget
+  const [currentBudget, setCurrentBudget] = useState<number>(50000);
+  const [budgetPeriod, setBudgetPeriod] = useState<string>("monthly");
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -48,6 +48,7 @@ const Index = () => {
     if (user) {
       fetchCategories();
       fetchExpenses();
+      fetchCurrentBudget();
     }
   }, [user]);
 
@@ -64,7 +65,26 @@ const Index = () => {
     }
   };
 
-  const fetchExpenses = async () => {
+  const fetchCurrentBudget = async () => {
+    const now = new Date();
+    const { data } = await supabase
+      .from("budgets")
+      .select("total_budget, period_start, period_end")
+      .eq("user_id", user?.id)
+      .lte("period_start", now.toISOString())
+      .gte("period_end", now.toISOString())
+      .maybeSingle();
+
+    if (data) {
+      setCurrentBudget(data.total_budget);
+      const start = new Date(data.period_start);
+      const end = new Date(data.period_end);
+      const diffMonths = (end.getFullYear() - start.getFullYear()) * 12 + end.getMonth() - start.getMonth();
+      setBudgetPeriod(diffMonths >= 11 ? "yearly" : "monthly");
+    }
+  };
+
+  const fetchExpenses = async () {
     setLoading(true);
     const { data, error } = await supabase
       .from('expenses')
@@ -224,17 +244,25 @@ const Index = () => {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Budget Tracker</h1>
-                <p className="text-sm text-muted-foreground">Manage your monthly expenses</p>
+                <p className="text-sm text-muted-foreground">Track your {budgetPeriod} expenses</p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              onClick={handleSignOut}
-              className="gap-2"
-            >
-              <LogOut className="h-4 w-4" />
-              Sign Out
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/budget-settings')}
+              >
+                Budget Settings
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleSignOut}
+                className="gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -244,9 +272,9 @@ const Index = () => {
         {/* Budget Overview Cards */}
         <section>
           <BudgetOverview 
-            totalBudget={monthlyBudget}
+            totalBudget={currentBudget}
             totalSpent={totalSpent}
-            monthlyLimit={monthlyBudget}
+            monthlyLimit={currentBudget}
           />
         </section>
 
