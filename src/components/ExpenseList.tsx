@@ -9,6 +9,7 @@ interface ExpenseWithCategory {
   amount: number;
   note: string | null;
   expense_date: string;
+  category_id: string;
   categoryName: string;
   categoryIcon: string;
 }

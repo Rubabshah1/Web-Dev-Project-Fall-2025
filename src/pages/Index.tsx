@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { BudgetOverview } from "@/components/BudgetOverview";
+import { BudgetSettings } from "@/components/BudgetSettings";
 import { AddExpenseForm } from "@/components/AddExpenseForm";
 import { ExpenseList } from "@/components/ExpenseList";
 import { CategoryChart } from "@/components/CategoryChart";
@@ -35,8 +36,8 @@ const Index = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentBudget, setCurrentBudget] = useState<number>(50000);
-  const [budgetPeriod, setBudgetPeriod] = useState<string>("monthly");
+  const [monthlyBudget, setMonthlyBudget] = useState(50000);
+  const [categoryBudgets, setCategoryBudgets] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -48,7 +49,7 @@ const Index = () => {
     if (user) {
       fetchCategories();
       fetchExpenses();
-      fetchCurrentBudget();
+      fetchBudget();
     }
   }, [user]);
 
@@ -65,26 +66,31 @@ const Index = () => {
     }
   };
 
-  const fetchCurrentBudget = async () => {
+  const fetchBudget = async () => {
     const now = new Date();
-    const { data } = await supabase
-      .from("budgets")
-      .select("total_budget, period_start, period_end")
-      .eq("user_id", user?.id)
-      .lte("period_start", now.toISOString())
-      .gte("period_end", now.toISOString())
-      .maybeSingle();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
 
-    if (data) {
-      setCurrentBudget(data.total_budget);
-      const start = new Date(data.period_start);
-      const end = new Date(data.period_end);
-      const diffMonths = (end.getFullYear() - start.getFullYear()) * 12 + end.getMonth() - start.getMonth();
-      setBudgetPeriod(diffMonths >= 11 ? "yearly" : "monthly");
+    const { data: budget } = await supabase
+      .from('budgets')
+      .select('*, category_budgets(*)')
+      .eq('user_id', user?.id)
+      .eq('period_start', startOfMonth)
+      .eq('period_end', endOfMonth)
+      .single();
+
+    if (budget) {
+      setMonthlyBudget(Number(budget.total_budget));
+      
+      const limits: Record<string, number> = {};
+      budget.category_budgets?.forEach((cb: any) => {
+        limits[cb.category_id] = Number(cb.limit_amount);
+      });
+      setCategoryBudgets(limits);
     }
   };
 
-  const fetchExpenses = async () {
+  const fetchExpenses = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('expenses')
@@ -244,16 +250,18 @@ const Index = () => {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Budget Tracker</h1>
-                <p className="text-sm text-muted-foreground">Track your {budgetPeriod} expenses</p>
+                <p className="text-sm text-muted-foreground">Manage your monthly expenses</p>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => navigate('/budget-settings')}
-              >
-                Budget Settings
-              </Button>
+            <div className="flex items-center gap-2">
+              <BudgetSettings 
+                userId={user.id} 
+                categories={categories} 
+                onBudgetUpdate={() => {
+                  fetchBudget();
+                  fetchExpenses();
+                }} 
+              />
               <Button
                 variant="outline"
                 onClick={handleSignOut}
@@ -272,9 +280,9 @@ const Index = () => {
         {/* Budget Overview Cards */}
         <section>
           <BudgetOverview 
-            totalBudget={currentBudget}
+            totalBudget={monthlyBudget}
             totalSpent={totalSpent}
-            monthlyLimit={currentBudget}
+            monthlyLimit={monthlyBudget}
           />
         </section>
 
@@ -286,7 +294,7 @@ const Index = () => {
         {/* Expense List and Chart */}
         <section className="grid gap-8 lg:grid-cols-2">
           <ExpenseList expenses={expensesWithCategory} onDeleteExpense={handleDeleteExpense} />
-          <CategoryChart expenses={expensesWithCategory} />
+          <CategoryChart expenses={expensesWithCategory} categoryBudgets={categoryBudgets} />
         </section>
       </main>
 
