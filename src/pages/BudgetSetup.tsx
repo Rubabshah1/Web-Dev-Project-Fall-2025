@@ -69,7 +69,7 @@ export const BudgetSetup = () => {
 
       toast({
         title: "Budget created",
-        description: `Your ${budgetType} budget of ₹${parseFloat(budgetAmount).toLocaleString()} is set!`,
+        description: `Your ${budgetType} budget of PKR ${parseFloat(budgetAmount).toLocaleString()} is set!`,
       });
 
       navigate("/dashboard");
@@ -152,7 +152,7 @@ export const BudgetSetup = () => {
                 {budgetType === "monthly" ? "Monthly" : "Yearly"} Budget Amount
               </Label>
               <div className="flex items-center gap-2">
-                <span className="text-2xl font-semibold text-primary">₹</span>
+              <span className="text-2xl font-semibold text-primary">PKR</span>
                 <Input
                   id="budget-amount"
                   type="number"

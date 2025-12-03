@@ -3,9 +3,12 @@ import { supabase } from "../integrations/supabaseClient.js";
 class CategoryController {
   async getCategories(req, res) {
     try {
+      const { userId } = req.query;
+
       const { data, error } = await supabase
         .from("categories")
         .select("*")
+        .eq("user_id", userId)
         .order("created_at", { ascending: true });
 
       if (error) throw error;
@@ -17,20 +20,41 @@ class CategoryController {
   }
 
   async addCategory(req, res) {
-    const { name, icon } = req.body;
+    const { userId, name, icon } = req.body;
 
     try {
       const { data, error } = await supabase
         .from("categories")
-        .insert([{ name, icon }])
-        .select()
-        .single();
+        .insert([{ 
+          user_id: userId,
+          name, 
+          icon 
+        }])
+        .select();
 
       if (error) throw error;
 
-      res.status(201).json(data);
+      res.status(201).json({ success: true, data });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      // Handle duplicate (user_id, name) gracefully by returning existing category
+      if (error && error.code === "23505") {
+        try {
+          const { data: existing, error: fetchError } = await supabase
+            .from("categories")
+            .select("*")
+            .eq("user_id", userId)
+            .eq("name", name)
+            .limit(1);
+
+          if (fetchError) throw fetchError;
+
+          return res.status(200).json({ success: true, data: existing });
+        } catch (fetchErr) {
+          return res.status(500).json({ success: false, error: fetchErr.message });
+        }
+      }
+
+      res.status(500).json({ success: false, error: error.message });
     }
   }
 

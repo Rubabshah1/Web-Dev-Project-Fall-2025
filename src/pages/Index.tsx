@@ -682,7 +682,7 @@ import { AddExpenseForm } from "@/components/AddExpenseForm";
 import { ExpenseList } from "@/components/ExpenseList";
 import { CategoryChart } from "@/components/CategoryChart";
 import { Button } from "@/components/ui/button";
-import { Wallet, LogOut, Home } from "lucide-react";
+import { Wallet, LogOut, Home, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -897,7 +897,7 @@ const Index = () => {
 
       toast({
         title: "Success",
-        description: `₹${amount.toLocaleString()} added to ${categoryName}`,
+        description: `PKR ${amount.toLocaleString()} added to ${categoryName}`,
       });
       refetchExpenses();
     } catch (error) {
@@ -1003,6 +1003,14 @@ const handleSignOut = async () => {
             </div>
 
             <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                onClick={() => navigate("/analytics")}
+                className="gap-2 hidden sm:inline-flex"
+              >
+                <BarChart3 className="h-4 w-4" />
+                Analytics
+              </Button>
               <BudgetSettings
                 userId={user.id}
                 categories={categories}

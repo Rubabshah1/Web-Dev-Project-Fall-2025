@@ -21,11 +21,14 @@
 
 // export default router;
 import express from 'express';
-import { getCategories, createCategory } from '../controllers/categoryController.js';
+import categoryController from '../controllers/categoryController.js';
 
 const router = express.Router();
 
-router.get('/', getCategories);
-router.post('/', createCategory);
+// Get all categories
+router.get('/', categoryController.getCategories.bind(categoryController));
+
+// Create a new category
+router.post('/', categoryController.addCategory.bind(categoryController));
 
 export default router;

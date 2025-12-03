@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Welcome from "./pages/Welcome";  
 import NotFound from "./pages/NotFound";
+import Analytics from "./pages/Analytics";
 import { useEffect } from "react";
 
 const queryClient = new QueryClient({
@@ -77,6 +78,16 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <Index />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Analytics - advanced charts */}
+            <Route
+              path="/analytics"
+              element={
+                <ProtectedRoute>
+                  <Analytics />
                 </ProtectedRoute>
               }
             />

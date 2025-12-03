@@ -148,7 +148,7 @@ export const Analytics = () => {
           <Card className="p-6 bg-gradient-to-br from-card to-blue/5 border-blue/20">
             <div className="space-y-2">
               <p className="text-sm font-medium text-muted-foreground">Total Spent</p>
-              <p className="text-3xl font-bold text-foreground">₹{totalSpent.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-foreground">PKR {totalSpent.toLocaleString()}</p>
               <p className="text-xs text-muted-foreground">{timeframe === "monthly" ? "This month" : "This year"}</p>
             </div>
           </Card>
@@ -156,7 +156,7 @@ export const Analytics = () => {
           <Card className="p-6 bg-gradient-to-br from-card to-green/5 border-green/20">
             <div className="space-y-2">
               <p className="text-sm font-medium text-muted-foreground">Average Daily</p>
-              <p className="text-3xl font-bold text-foreground">₹{averageDaily.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+              <p className="text-3xl font-bold text-foreground">PKR {averageDaily.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
               <p className="text-xs text-muted-foreground">{expenses.length} transactions</p>
             </div>
           </Card>
@@ -164,7 +164,7 @@ export const Analytics = () => {
           <Card className="p-6 bg-gradient-to-br from-card to-orange/5 border-orange/20">
             <div className="space-y-2">
               <p className="text-sm font-medium text-muted-foreground">Largest Expense</p>
-              <p className="text-3xl font-bold text-foreground">₹{largestExpense.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-foreground">PKR {largestExpense.toLocaleString()}</p>
               <p className="text-xs text-muted-foreground">Single transaction</p>
             </div>
           </Card>
@@ -183,7 +183,7 @@ export const Analytics = () => {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, value }) => `${name}: ₹${value.toLocaleString()}`}
+                    label={({ name, value }) => `${name}: PKR ${value.toLocaleString()}`}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
@@ -192,7 +192,7 @@ export const Analytics = () => {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => `₹${(value as number).toLocaleString()}`} />
+                  <Tooltip formatter={(value) => `PKR ${(value as number).toLocaleString()}`} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
@@ -211,7 +211,7 @@ export const Analytics = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
                   <YAxis stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip formatter={(value) => `₹${(value as number).toLocaleString()}`} />
+                  <Tooltip formatter={(value) => `PKR ${(value as number).toLocaleString()}`} />
                   <Legend />
                   <Line
                     type="monotone"
@@ -239,7 +239,7 @@ export const Analytics = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
                   <YAxis stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip formatter={(value) => `₹${(value as number).toLocaleString()}`} />
+                  <Tooltip formatter={(value) => `PKR ${(value as number).toLocaleString()}`} />
                   <Bar dataKey="value" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} name="Amount" />
                 </BarChart>
               </ResponsiveContainer>
