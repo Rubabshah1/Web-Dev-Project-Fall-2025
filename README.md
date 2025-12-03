@@ -1,4 +1,4 @@
-Budget Tracker – Web Development Course 2025
+### Budget Tracker – Web Development Course 2025
 
 This project is a budget tracking web application created for the 2025 Web Development course.
 It allows students to practice real-world development workflows while building a functional tool for managing income, expenses, and financial insights. The app includes user authentication, database storage, and a modern React-based UI.
