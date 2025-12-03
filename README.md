@@ -1,3 +1,8 @@
+Budget Tracker – Web Development Course 2025
+
+This project is a budget tracking web application created for the 2025 Web Development course.
+It allows students to practice real-world development workflows while building a functional tool for managing income, expenses, and financial insights. The app includes user authentication, database storage, and a modern React-based UI.
+
 **Local Setup**
 
 If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
@@ -28,21 +33,6 @@ Create a `.env` file in the project root with your Supabase credentials:
 SUPABASE_URL=<your_supabase_project_url>
 SUPABASE_SERVICE_ROLE_KEY=<your_supabase_service_role_key>
 ```
-
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
 
 ## Technologies used for this project?
 
