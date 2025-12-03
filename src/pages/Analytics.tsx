@@ -84,18 +84,44 @@ export const Analytics = () => {
     value: amount as number,
   }));
 
-  // Process data for daily spending line chart
-  const dailyData = expenses.reduce((acc: Record<string, number>, exp: Expense) => {
-    acc[exp.expense_date] = (acc[exp.expense_date] || 0) + exp.amount;
-    return acc;
-  }, {});
+  // Process data for time-series spending chart
+  let lineData: { date: string; amount: number }[] = [];
 
-  const lineData = Object.entries(dailyData)
-    .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
-    .map(([date, amount]) => ({
-      date: new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-      amount: amount as number,
-    }));
+  if (timeframe === "monthly") {
+    // Group by exact calendar date within the current month
+    const dailyData = expenses.reduce((acc: Record<string, number>, exp: Expense) => {
+      acc[exp.expense_date] = (acc[exp.expense_date] || 0) + exp.amount;
+      return acc;
+    }, {});
+
+    lineData = Object.entries(dailyData)
+      .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+      .map(([date, amount]) => ({
+        date: new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        amount: amount as number,
+      }));
+  } else {
+    // Yearly view: group by month (Jan, Feb, ...)
+    const monthlyData = expenses.reduce((acc: Record<string, number>, exp: Expense) => {
+      const d = new Date(exp.expense_date);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; // e.g. 2025-01
+      acc[key] = (acc[key] || 0) + exp.amount;
+      return acc;
+    }, {});
+
+    lineData = Object.entries(monthlyData)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, amount]) => {
+        const [year, month] = key.split("-").map(Number);
+        const label = new Date(year, month - 1, 1).toLocaleDateString("en-US", {
+          month: "short",
+        });
+        return {
+          date: label,
+          amount: amount as number,
+        };
+      });
+  }
 
   const totalSpent = expenses.reduce((sum: number, exp: Expense) => sum + exp.amount, 0);
   const averageDaily = totalSpent / (expenses.length || 1);

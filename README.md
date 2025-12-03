@@ -20,6 +20,18 @@ npm i
 npm run dev
 ```
 
+### Required environment variables
+
+Create a `.env` file in the project root with your Supabase credentials:
+
+```
+SUPABASE_URL=<your_supabase_project_url>
+SUPABASE_SERVICE_ROLE_KEY=<your_supabase_service_role_key>
+```
+
+> **Why service role?**  
+> The backend seeds default categories and fetches data on behalf of your users. Using the service-role key ensures the server can bypass Supabase row-level security while still keeping the key on the backend only. **Never expose the service-role key to the browser.**
+
 **Edit a file directly in GitHub**
 
 - Navigate to the desired file(s).

@@ -505,7 +505,11 @@ const CURRENCIES = [
 type CurrencyCode = (typeof CURRENCIES)[number]["code"];
 type Expense = { id: string; amount: number; description?: string };
 
-export const BudgetOverview = () => {
+interface BudgetOverviewProps {
+  refreshKey?: number;
+}
+
+export const BudgetOverview = ({ refreshKey }: BudgetOverviewProps) => {
   const { user } = useAuth();
   const [currency, setCurrency] = useState<CurrencyCode>("PKR");
   const [totalBudget, setTotalBudget] = useState<number>(0);
@@ -565,7 +569,7 @@ export const BudgetOverview = () => {
 
   useEffect(() => {
     fetchBudgetAndExpenses();
-  }, [user]);
+  }, [user, refreshKey]);
 
   /** Add an expense (real-time update) */
   const addExpense = async (newExpense: Expense) => {

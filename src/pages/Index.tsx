@@ -673,7 +673,7 @@
 // };
 
 // export default Index;
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { BudgetOverview } from "@/components/BudgetOverview";
@@ -803,6 +803,7 @@ const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [overviewRefreshKey, setOverviewRefreshKey] = useState(0);
   
   useEffect(() => {
     document.title = "Budget Tracker";
@@ -866,7 +867,8 @@ const Index = () => {
   const handleAddExpense = async (
     categoryName: string,
     amount: number,
-    note: string
+    note: string,
+    expenseDate: string
   ) => {
     if (!user) return;
 
@@ -892,14 +894,45 @@ const Index = () => {
         category.id,
         amount,
         note || null,
-        new Date().toISOString().split("T")[0]
+        expenseDate
       );
 
+      // Success toast
       toast({
         title: "Success",
         description: `PKR ${amount.toLocaleString()} added to ${categoryName}`,
       });
+
+      // Check overall monthly budget
+      const projectedTotal = totalSpent + amount;
+      if (monthlyBudget && projectedTotal > monthlyBudget) {
+        const overBy = projectedTotal - monthlyBudget;
+        toast({
+          title: "Budget limit exceeded",
+          description: `You are over your monthly budget by PKR ${overBy.toLocaleString()}.`,
+          variant: "destructive",
+        });
+      }
+
+      // Check category-specific budget (if defined)
+      const categoryLimit = categoryBudgets[category.id];
+      if (categoryLimit) {
+        const currentCategorySpent = expenses
+          .filter((e) => e.category_id === category.id)
+          .reduce((sum, e) => sum + e.amount, 0);
+        const projectedCategoryTotal = currentCategorySpent + amount;
+
+        if (projectedCategoryTotal > categoryLimit) {
+          const overCatBy = projectedCategoryTotal - categoryLimit;
+          toast({
+            title: "Category limit exceeded",
+            description: `You are over your "${categoryName}" limit by PKR ${overCatBy.toLocaleString()}.`,
+            variant: "destructive",
+          });
+        }
+      }
       refetchExpenses();
+      setOverviewRefreshKey((key) => key + 1);
     } catch (error) {
       toast({
         title: "Error adding expense",
@@ -920,6 +953,7 @@ const Index = () => {
         ["expenses", user?.id],
         expenses.filter((e) => e.id !== id)
       );
+      setOverviewRefreshKey((key) => key + 1);
     } catch (error) {
       toast({
         title: "Error",
@@ -1033,7 +1067,7 @@ const handleSignOut = async () => {
       <main className="container mx-auto px-4 py-8 space-y-10">
         {/* Budget Overview */}
         <section>
-          <BudgetOverview />
+          <BudgetOverview refreshKey={overviewRefreshKey} />
         </section>
 
         {/* Add Expense */}

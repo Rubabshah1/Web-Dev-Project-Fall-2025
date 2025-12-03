@@ -8,7 +8,7 @@ import { Plus } from "lucide-react";
 import type { Category } from "@/pages/Index";
 
 interface AddExpenseFormProps {
-  onAddExpense: (category: string, amount: number, note: string) => void;
+  onAddExpense: (category: string, amount: number, note: string, date: string) => void;
   categories: Category[];
 }
 
@@ -24,6 +24,9 @@ export const AddExpenseForm = ({ onAddExpense, categories }: AddExpenseFormProps
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("grocery");
   const [description, setDescription] = useState("");
+  const [date, setDate] = useState<string>(() => {
+    return new Date().toISOString().split("T")[0];
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,10 +35,11 @@ export const AddExpenseForm = ({ onAddExpense, categories }: AddExpenseFormProps
       return;
     }
 
-    onAddExpense(category, parseFloat(amount), description);
+    onAddExpense(category, parseFloat(amount), description, date);
 
     setAmount("");
     setDescription("");
+    setDate(new Date().toISOString().split("T")[0]);
   };
 
   // Merge default categories with user's custom categories
@@ -50,7 +54,7 @@ export const AddExpenseForm = ({ onAddExpense, categories }: AddExpenseFormProps
     <Card className="p-6 bg-gradient-to-br from-card to-secondary/20 shadow-[var(--shadow-card)] border-border/50">
       <h2 className="text-2xl font-bold text-foreground mb-6">Add New Expense</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3">
           <div className="space-y-2">
             <Label htmlFor="amount" className="text-foreground">Amount</Label>
             <Input
@@ -79,6 +83,18 @@ export const AddExpenseForm = ({ onAddExpense, categories }: AddExpenseFormProps
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="date" className="text-foreground">Date</Label>
+            <Input
+              id="date"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="border-border bg-background"
+              required
+            />
           </div>
         </div>
 

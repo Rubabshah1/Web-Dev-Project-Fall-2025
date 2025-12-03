@@ -5,6 +5,10 @@ class CategoryController {
     try {
       const { userId } = req.query;
 
+      if (!userId) {
+        return res.status(400).json({ success: false, error: 'Missing userId' });
+      }
+
       const { data, error } = await supabase
         .from("categories")
         .select("*")
@@ -12,6 +16,38 @@ class CategoryController {
         .order("created_at", { ascending: true });
 
       if (error) throw error;
+
+      const defaultCategories = [
+        { name: "grocery", icon: "🛒" },
+        { name: "shopping", icon: "🛍️" },
+        { name: "utilities", icon: "⚡" },
+        { name: "car", icon: "🚗" },
+        { name: "other", icon: "📋" },
+      ];
+
+      const existingNames = new Set((data || []).map((cat) => cat.name.toLowerCase()));
+      const missingCategories = defaultCategories.filter(
+        (cat) => !existingNames.has(cat.name.toLowerCase())
+      );
+
+      if (missingCategories.length > 0) {
+        await supabase.from("categories").insert(
+          missingCategories.map((cat) => ({
+            user_id: userId,
+            name: cat.name,
+            icon: cat.icon,
+          }))
+        );
+
+        const { data: refreshed, error: refreshError } = await supabase
+          .from("categories")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: true });
+
+        if (refreshError) throw refreshError;
+        return res.status(200).json(refreshed);
+      }
 
       res.status(200).json(data);
     } catch (error) {
