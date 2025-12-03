@@ -62,7 +62,7 @@ export const ExpenseList = ({ expenses, onDeleteExpense }: ExpenseListProps) => 
                       <p className="text-sm text-foreground mb-2">{expense.note}</p>
                     )}
                     <p className="text-2xl font-bold text-foreground">
-                      ₹{expense.amount.toLocaleString()}
+                      Rs. {expense.amount.toLocaleString()}
                     </p>
                   </div>
                   <Button

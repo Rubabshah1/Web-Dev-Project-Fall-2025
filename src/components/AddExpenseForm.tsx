@@ -52,11 +52,11 @@ export const AddExpenseForm = ({ onAddExpense, categories }: AddExpenseFormProps
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="amount" className="text-foreground">Amount (₹)</Label>
+            <Label htmlFor="amount" className="text-foreground">Amount</Label>
             <Input
               id="amount"
               type="number"
-              step="0.01"
+              step="50.00"
               placeholder="0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}

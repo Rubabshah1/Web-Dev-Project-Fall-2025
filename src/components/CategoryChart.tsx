@@ -88,26 +88,26 @@ export const CategoryChart = ({ expenses, categoryBudgets = {} }: CategoryChartP
                     >
                       {parseFloat(percentage) > 15 && (
                         <span className="text-xs font-semibold text-white">
-                          ₹{data.amount.toLocaleString()}
+                          Rs. {data.amount.toLocaleString()}
                         </span>
                       )}
                     </div>
                   </div>
                   {parseFloat(percentage) <= 15 && (
                     <span className="text-sm font-semibold text-foreground min-w-[80px] text-right">
-                      ₹{data.amount.toLocaleString()}
+                      Rs. {data.amount.toLocaleString()}
                     </span>
                   )}
                 </div>
                 {categoryBudget && (
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-muted-foreground">
-                      Budget: ₹{categoryBudget.toLocaleString()}
+                      Budget: Rs. {categoryBudget.toLocaleString()}
                     </span>
                     <span className={isOverBudget ? 'text-warning font-semibold' : 'text-success'}>
                       {isOverBudget 
-                        ? `₹${(data.amount - categoryBudget).toLocaleString()} over` 
-                        : `₹${(categoryBudget - data.amount).toLocaleString()} remaining`}
+                        ? `Rs. ${(data.amount - categoryBudget).toLocaleString()} over` 
+                        : `Rs. ${(categoryBudget - data.amount).toLocaleString()} remaining`}
                     </span>
                   </div>
                 )}

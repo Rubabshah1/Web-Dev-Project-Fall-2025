@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Settings, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 import type { Category } from "@/pages/Index";
 
@@ -35,27 +34,36 @@ export const BudgetSettings = ({ userId, categories, onBudgetUpdate }: BudgetSet
   }, [open]);
 
   const fetchCurrentBudget = async () => {
-    // Get current month's budget
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+    try {
+      // Get current month's budget from backend API
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
 
-    const { data: budget } = await supabase
-      .from('budgets')
-      .select('*, category_budgets(*)')
-      .eq('user_id', userId)
-      .eq('period_start', startOfMonth)
-      .eq('period_end', endOfMonth)
-      .single();
+      const response = await fetch(
+        `http://localhost:5001/api/budgets?userId=${userId}&startDate=${startOfMonth}&endDate=${endOfMonth}`
+      );
+      const data = await response.json();
 
-    if (budget) {
-      setTotalBudget(budget.total_budget.toString());
-      
-      const limits: Record<string, string> = {};
-      budget.category_budgets?.forEach((cb: any) => {
-        limits[cb.category_id] = cb.limit_amount.toString();
+      if (data.success && data.data && data.data.length > 0) {
+        const budget = data.data[0];
+        setTotalBudget(budget.total_budget.toString());
+        
+        if (budget.category_limits) {
+          const limits: Record<string, string> = {};
+          Object.entries(budget.category_limits).forEach(([categoryId, limit]: [string, any]) => {
+            limits[categoryId] = limit.toString();
+          });
+          setCategoryLimits(limits);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching budget:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch current budget",
+        variant: "destructive",
       });
-      setCategoryLimits(limits);
     }
   };
 
@@ -65,73 +73,32 @@ export const BudgetSettings = ({ userId, categories, onBudgetUpdate }: BudgetSet
       const parsed = budgetSchema.parse({
         totalBudget: parseFloat(totalBudget),
         categoryLimits: Object.entries(categoryLimits).reduce((acc, [key, value]) => {
-          acc[key] = parseFloat(value);
+          if (value) {
+            acc[key] = parseFloat(value);
+          }
           return acc;
         }, {} as Record<string, number>)
       });
 
       setLoading(true);
 
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+      // Send budget data to backend API
+      const response = await fetch('http://localhost:5001/api/budgets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          totalBudget: parsed.totalBudget,
+          categoryLimits: parsed.categoryLimits,
+        }),
+      });
 
-      // Check if budget exists for current month
-      const { data: existingBudget } = await supabase
-        .from('budgets')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('period_start', startOfMonth)
-        .eq('period_end', endOfMonth)
-        .single();
+      const result = await response.json();
 
-      let budgetId: string;
-
-      if (existingBudget) {
-        // Update existing budget
-        const { error: updateError } = await supabase
-          .from('budgets')
-          .update({ total_budget: parsed.totalBudget })
-          .eq('id', existingBudget.id);
-
-        if (updateError) throw updateError;
-        budgetId = existingBudget.id;
-
-        // Delete existing category budgets
-        await supabase
-          .from('category_budgets')
-          .delete()
-          .eq('budget_id', budgetId);
-      } else {
-        // Create new budget
-        const { data: newBudget, error: insertError } = await supabase
-          .from('budgets')
-          .insert([{
-            user_id: userId,
-            period_start: startOfMonth,
-            period_end: endOfMonth,
-            total_budget: parsed.totalBudget
-          }])
-          .select()
-          .single();
-
-        if (insertError) throw insertError;
-        budgetId = newBudget.id;
-      }
-
-      // Insert category budgets
-      if (Object.keys(parsed.categoryLimits).length > 0) {
-        const categoryBudgetInserts = Object.entries(parsed.categoryLimits).map(([categoryId, limit]) => ({
-          budget_id: budgetId,
-          category_id: categoryId,
-          limit_amount: limit
-        }));
-
-        const { error: categoryError } = await supabase
-          .from('category_budgets')
-          .insert(categoryBudgetInserts);
-
-        if (categoryError) throw categoryError;
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to save budget');
       }
 
       toast({
@@ -183,7 +150,7 @@ export const BudgetSettings = ({ userId, categories, onBudgetUpdate }: BudgetSet
               <Input
                 id="total-budget"
                 type="number"
-                step="0.01"
+                step="50.00"
                 placeholder="50000"
                 value={totalBudget}
                 onChange={(e) => setTotalBudget(e.target.value)}
@@ -206,16 +173,16 @@ export const BudgetSettings = ({ userId, categories, onBudgetUpdate }: BudgetSet
               {categories.map((category) => (
                 <Card key={category.id} className="p-3 bg-background border-border/50">
                   <div className="flex items-center gap-3">
-                    <span className="text-xl">{category.icon}</span>
+                    {/* <span className="text-xl">{category.icon}</span> */}
                     <div className="flex-1">
                       <Label htmlFor={`cat-${category.id}`} className="text-sm font-medium">
-                        {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
+                        {category.name.slice(0).toUpperCase()}
                       </Label>
                     </div>
                     <Input
                       id={`cat-${category.id}`}
                       type="number"
-                      step="0.01"
+                      step="50.00"
                       placeholder="Limit"
                       value={categoryLimits[category.id] || ""}
                       onChange={(e) => setCategoryLimits({
