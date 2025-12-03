@@ -1,4 +1,4 @@
-**Use your preferred IDE**
+**Local Setup**
 
 If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
 
@@ -29,8 +29,6 @@ SUPABASE_URL=<your_supabase_project_url>
 SUPABASE_SERVICE_ROLE_KEY=<your_supabase_service_role_key>
 ```
 
-> **Why service role?**  
-> The backend seeds default categories and fetches data on behalf of your users. Using the service-role key ensures the server can bypass Supabase row-level security while still keeping the key on the backend only. **Never expose the service-role key to the browser.**
 
 **Edit a file directly in GitHub**
 
@@ -46,7 +44,7 @@ SUPABASE_SERVICE_ROLE_KEY=<your_supabase_service_role_key>
 - Click on "New codespace" to launch a new Codespace environment.
 - Edit files directly within the Codespace and commit and push your changes once you're done.
 
-## What technologies are used for this project?
+## Technologies used for this project?
 
 This project is built with:
 
